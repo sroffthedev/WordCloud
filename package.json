@@ -1,11 +1,10 @@
 {
   "name": "wordcloud-live",
   "version": "1.0.0",
-  "description": "Real-time collaborative word & image cloud application without account",
-  "main": "server.js",
+  "description": "Real-time collaborative word & image cloud application",
+  "private": true,
   "scripts": {
-    "start": "node server.js"
+    "dev": "node local-dev.js"
   },
   "dependencies": {}
 }
-

@@ -1,5 +1,5 @@
 {
-  "version": 2,
+  "cleanUrls": true,
   "rewrites": [
     {
       "source": "/api/(.*)",
@@ -10,13 +10,8 @@
       "destination": "/index.html"
     },
     {
-      "source": "/([A-Za-z]{6})",
-      "destination": "/index.html"
-    },
-    {
-      "source": "/(.*)",
+      "source": "/((?!api/|js/|style\\.css|favicon\\.ico).*)",
       "destination": "/index.html"
     }
   ]
 }
-

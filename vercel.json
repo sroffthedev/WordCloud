@@ -1,0 +1,22 @@
+{
+  "version": 2,
+  "rewrites": [
+    {
+      "source": "/api/(.*)",
+      "destination": "/api/index.js"
+    },
+    {
+      "source": "/join/(.*)",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/([A-Za-z]{6})",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
+}
+

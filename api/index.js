@@ -2,7 +2,6 @@ const https = require('https');
 const fs = require('fs');
 const path = require('path');
 
-// Charge .env en local si présent (sur Vercel, les variables d'environnement du Dashboard ou .env sont injectées)
 function loadDotEnv() {
   const candidates = [
     path.join(process.cwd(), '.env'),
@@ -129,12 +128,23 @@ function postToDiscordWebhook(targetUrlString, payload) {
   });
 }
 
+const MIME_TYPES = {
+  '.html': 'text/html; charset=utf-8',
+  '.css': 'text/css; charset=utf-8',
+  '.js': 'application/javascript; charset=utf-8',
+  '.mjs': 'application/javascript; charset=utf-8',
+  '.json': 'application/json; charset=utf-8',
+  '.svg': 'image/svg+xml',
+  '.png': 'image/png',
+  '.ico': 'image/x-icon'
+};
+
 module.exports = async function apiHandler(req, res) {
   const parsedUrl = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
-  const pathname = parsedUrl.pathname;
+  const pathname = parsedUrl.pathname.replace(/\/+$/, '') || '/';
 
   // 1. GET /api/config
-  if (req.method === 'GET' && pathname === '/api/config') {
+  if (req.method === 'GET' && (pathname === '/api/config' || pathname.endsWith('/config'))) {
     const allowedAccounts = Array.from(getEnvAccounts().keys());
     return sendJson(res, 200, {
       publicDomain: process.env.PUBLIC_DOMAIN || 'wordcloud.sroff.dev',
@@ -153,7 +163,7 @@ module.exports = async function apiHandler(req, res) {
   }
 
   // 2. POST /api/auth/verify
-  if (req.method === 'POST' && pathname === '/api/auth/verify') {
+  if (req.method === 'POST' && (pathname === '/api/auth/verify' || pathname.endsWith('/auth/verify'))) {
     try {
       const body = await readJsonBody(req);
       const username = typeof body.username === 'string' ? body.username.trim().toLowerCase() : '';
@@ -182,7 +192,7 @@ module.exports = async function apiHandler(req, res) {
   }
 
   // 3. POST /api/discord/invite
-  if (req.method === 'POST' && pathname === '/api/discord/invite') {
+  if (req.method === 'POST' && (pathname === '/api/discord/invite' || pathname.endsWith('/discord/invite'))) {
     try {
       const body = await readJsonBody(req);
       const code = String(body.code || '').toUpperCase();
@@ -247,7 +257,7 @@ module.exports = async function apiHandler(req, res) {
   }
 
   // 4. POST /api/discord/feedback
-  if (req.method === 'POST' && pathname === '/api/discord/feedback') {
+  if (req.method === 'POST' && (pathname === '/api/discord/feedback' || pathname.endsWith('/discord/feedback'))) {
     try {
       const body = await readJsonBody(req);
       const category = body.category === 'suggestion' ? 'suggestion' : 'bug';
@@ -318,6 +328,25 @@ module.exports = async function apiHandler(req, res) {
     }
   }
 
+  // Fallback statique si la requête n'est pas une route /api/
+  if ((req.method === 'GET' || req.method === 'HEAD') && !pathname.startsWith('/api')) {
+    const publicDir = path.join(__dirname, '..', 'public');
+    const safePath = path.normalize(pathname).replace(/^(\.\.[/\\])+/, '');
+    const fullPath = path.join(publicDir, safePath);
+    const targetFile = (pathname !== '/' && fullPath.startsWith(publicDir) && fs.existsSync(fullPath) && fs.statSync(fullPath).isFile())
+      ? fullPath
+      : path.join(publicDir, 'index.html');
+
+    if (fs.existsSync(targetFile)) {
+      const ext = path.extname(targetFile).toLowerCase();
+      res.writeHead(200, {
+        'Content-Type': MIME_TYPES[ext] || 'text/html; charset=utf-8',
+        'Cache-Control': 'no-cache'
+      });
+      res.end(fs.readFileSync(targetFile));
+      return;
+    }
+  }
+
   return sendJson(res, 404, { error: 'API endpoint not found' });
 };
-

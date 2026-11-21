@@ -330,7 +330,12 @@ module.exports = async function apiHandler(req, res) {
 
   // Fallback statique si la requête n'est pas une route /api/
   if ((req.method === 'GET' || req.method === 'HEAD') && !pathname.startsWith('/api')) {
-    const publicDir = path.join(__dirname, '..', 'public');
+    const candidates = [
+      path.join(process.cwd(), 'public'),
+      path.join(__dirname, '..', 'public'),
+      path.join(__dirname, 'public')
+    ];
+    const publicDir = candidates.find(d => fs.existsSync(d)) || candidates[0];
     const safePath = path.normalize(pathname).replace(/^(\.\.[/\\])+/, '');
     const fullPath = path.join(publicDir, safePath);
     const targetFile = (pathname !== '/' && fullPath.startsWith(publicDir) && fs.existsSync(fullPath) && fs.statSync(fullPath).isFile())

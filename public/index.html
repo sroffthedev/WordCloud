@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>WordCloud</title>
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+
+  <!-- ==================== 1. ACCUEIL ==================== -->
+  <main id="home-view" class="view active">
+    <header class="home-topbar">
+      <div class="brand-logo">WordCloud</div>
+
+      <div class="topbar-actions">
+        <!-- Non connecté : Bouton Login -->
+        <button type="button" id="open-login-modal-btn" class="btn btn-outline btn-sm">
+          Login
+        </button>
+
+        <!-- Connecté : Compte (cliquable pour changer son MDP) + Historique + Bouton [+] + Bouton [Logout] -->
+        <div id="logged-in-controls" class="logged-in-controls hidden">
+          <button type="button" id="logged-user-pill" class="user-pill user-pill-btn" title="Cliquer pour changer le mot de passe"></button>
+          <button type="button" id="open-history-modal-btn" class="btn btn-outline btn-sm" title="Historique de vos rooms">
+            Historique
+          </button>
+          <button type="button" id="open-create-modal-btn" class="btn btn-primary btn-icon-plus" title="Créer une room">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <path d="M12 5v14M5 12h14" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
+          <button type="button" id="logout-btn" class="btn btn-outline btn-sm">
+            Logout
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <div class="home-center">
+      <section class="join-card">
+        <h1>Rejoindre une session</h1>
+        <p class="join-subtitle">Entrez le code à 6 lettres affiché sur l'écran de présentation.</p>
+
+        <form id="join-room-form" class="join-form">
+          <input
+            type="text"
+            id="join-code-input"
+            class="input-code"
+            placeholder="ABCDEF"
+            maxlength="6"
+            autocomplete="off"
+            autocapitalize="characters"
+            spellcheck="false"
+            required
+          />
+          <button type="submit" id="join-room-btn" class="btn btn-primary btn-lg btn-block">
+            Rejoindre
+          </button>
+        </form>
+      </section>
+    </div>
+
+    <!-- Bouton flottant en bas à droite de la page d'accueil -->
+    <button type="button" id="open-feedback-modal-btn" class="btn btn-outline feedback-fab">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <span>Un bug ou une suggestion d'ajout ?</span>
+    </button>
+  </main>
+
+  <!-- ==================== 2. VUE ADMIN : SALLE D'ATTENTE (LOBBY) ==================== -->
+  <section id="admin-lobby-view" class="view">
+    <header class="home-topbar">
+      <div class="topbar-title-group">
+        <div class="brand-logo">WordCloud</div>
+        <span class="room-name-badge" id="lobby-room-name">---</span>
+      </div>
+      <div class="topbar-actions">
+        <span class="status-badge"><span class="dot-amber"></span> Salle d'attente</span>
+        <button type="button" id="lobby-back-btn" class="btn btn-ghost btn-sm">Quitter</button>
+      </div>
+    </header>
+
+    <div class="lobby-center">
+      <div class="lobby-card">
+        <div class="lobby-grid">
+          <div class="lobby-qr-wrap">
+            <div id="lobby-qr-box" class="lobby-qr-box"></div>
+          </div>
+
+          <div class="lobby-details">
+            <div class="lobby-field">
+              <span class="field-tag">Code de la room</span>
+              <div id="lobby-code-text" class="lobby-code-big">------</div>
+            </div>
+
+            <div class="lobby-field">
+              <span class="field-tag">Lien direct</span>
+              <div id="lobby-url-text" class="lobby-url-text">wordcloud.sroff.dev/join/------</div>
+            </div>
+
+            <div class="lobby-stats-bar">
+              <div class="stat-block">
+                <strong id="lobby-participant-count">0</strong>
+                <span>participant(s)</span>
+              </div>
+              <div class="stat-sep"></div>
+              <div class="stat-block">
+                <strong id="lobby-duration-label">5 min</strong>
+                <span>durée du timer</span>
+              </div>
+            </div>
+
+            <div class="lobby-actions-stack">
+              <button type="button" id="send-discord-btn" class="btn btn-discord btn-block">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03z"/>
+                </svg>
+                <span>Envoyer sur Discord</span>
+              </button>
+
+              <button type="button" id="start-session-btn" class="btn btn-primary btn-lg btn-block">
+                Lancer la session
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================== 3. VUE ADMIN : NUAGE EN DIRECT / ARCHIVE ==================== -->
+  <div id="admin-live-view" class="view">
+    <header class="live-topbar">
+      <div class="live-left">
+        <button type="button" id="live-back-btn" class="btn btn-ghost btn-sm">Quitter</button>
+        <span id="live-room-name" class="room-name-badge">---</span>
+        <div class="live-pill">
+          <span class="dot-green"></span>
+          <span id="live-participant-count">0</span> participant(s)
+        </div>
+      </div>
+
+      <!-- Code unique affiché en haut au centre -->
+      <div class="live-center">
+        <div class="code-pill">
+          <span class="code-pill-label">CODE</span>
+          <strong id="live-top-code" class="code-pill-val">------</strong>
+        </div>
+        <button type="button" id="show-qr-overlay-btn" class="btn btn-outline btn-sm">
+          QR Code
+        </button>
+      </div>
+
+      <!-- Contrôles Admin + Timer + Export PNG/PDF en haut à droite -->
+      <div class="live-right">
+        <button type="button" id="toggle-images-btn" class="btn btn-outline btn-sm" aria-pressed="false">
+          <span class="switch-dot"></span>
+          <span id="toggle-images-text">Images / GIFs : OFF</span>
+        </button>
+
+        <div id="live-timer-box" class="timer-pill">
+          <span id="live-timer-text">05:00</span>
+        </div>
+
+        <button type="button" id="end-timer-now-btn" class="btn btn-ghost btn-sm">
+          Terminer
+        </button>
+
+        <div class="export-group">
+          <button type="button" id="export-png-btn" class="btn btn-export btn-sm" disabled title="Disponible une fois le timer terminé">
+            PNG
+          </button>
+          <button type="button" id="export-pdf-btn" class="btn btn-export btn-sm" disabled title="Disponible une fois le timer terminé">
+            PDF
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <div class="live-stage-wrap">
+      <div id="cloud-stage" class="cloud-stage">
+        <div id="cloud-empty-state" class="cloud-empty-state">
+          <p class="empty-heading">En attente des réponses...</p>
+          <p class="empty-desc">Les mots, phrases et images envoyés par les participants s'afficheront ici en direct.</p>
+        </div>
+        <div id="cloud-canvas" class="cloud-canvas"></div>
+      </div>
+
+      <footer class="live-footer">
+        <span id="live-stats-text">0 réponse</span>
+        <span id="live-images-notice" class="images-notice hidden">
+          Images reçues masquées (Images / GIFs : OFF)
+        </span>
+      </footer>
+    </div>
+  </div>
+
+  <!-- ==================== 4. VUE PARTICIPANT ==================== -->
+  <main id="participant-view" class="view">
+    <header class="home-topbar">
+      <div class="brand-logo">WordCloud</div>
+      <div class="topbar-actions">
+        <span class="room-tag-pill">Code <strong id="part-room-code">------</strong></span>
+        <span id="part-timer-badge" class="timer-pill">05:00</span>
+      </div>
+    </header>
+
+    <div class="participant-center">
+      <section id="part-waiting-state" class="join-card state-card hidden">
+        <div class="spinner-ring"></div>
+        <h2>En attente du lancement</h2>
+        <p class="join-subtitle">
+          Vous êtes bien connecté. Dès que l'animateur lance la session, vous pourrez envoyer vos mots et images.
+        </p>
+      </section>
+
+      <section id="part-active-state" class="join-card hidden">
+        <h2>Envoyer une réponse</h2>
+        <p class="join-subtitle">Le nuage de mots s'affiche en direct sur l'écran de l'animateur.</p>
+
+        <form id="participant-submit-form" class="form-stack">
+          <div class="field-block">
+            <label for="part-word-input">Mot ou phrase</label>
+            <input
+              type="text"
+              id="part-word-input"
+              placeholder="Écrivez un mot ou une phrase..."
+              maxlength="80"
+              autocomplete="off"
+            />
+          </div>
+
+          <div class="field-block">
+            <label>Image ou GIF (optionnel)</label>
+            <label for="part-image-input" class="upload-dropzone">
+              <input
+                type="file"
+                id="part-image-input"
+                accept="image/png,image/jpeg,image/gif,image/webp"
+                hidden
+              />
+              <div id="part-upload-placeholder" class="upload-placeholder">
+                <span>Ajouter une image ou un GIF</span>
+              </div>
+              <div id="part-image-preview" class="image-preview hidden">
+                <img id="part-preview-img" src="" alt="Aperçu" />
+                <button type="button" id="part-remove-img-btn" class="btn-remove-img" title="Retirer">&times;</button>
+              </div>
+            </label>
+          </div>
+
+          <button type="submit" id="part-send-btn" class="btn btn-primary btn-lg btn-block">
+            Envoyer
+          </button>
+        </form>
+      </section>
+
+      <section id="part-ended-state" class="join-card state-card hidden">
+        <h2>Session terminée</h2>
+        <p class="join-subtitle">
+          Le temps est écoulé, il n'est plus possible d'envoyer de réponses.
+        </p>
+      </section>
+    </div>
+  </main>
+
+  <!-- ==================== MODAL 1 : LOGIN ==================== -->
+  <div id="login-modal" class="modal-overlay hidden" role="dialog" aria-modal="true">
+    <div class="modal-card">
+      <button type="button" id="close-login-modal" class="modal-close" aria-label="Fermer">&times;</button>
+      <h3>Connexion Animateur</h3>
+      <p class="modal-desc">Connectez-vous pour créer et gérer vos rooms.</p>
+
+      <form id="login-form" class="form-stack">
+        <div class="field-block">
+          <label for="login-username">Identifiant</label>
+          <input
+            type="text"
+            id="login-username"
+            placeholder="Nom d'utilisateur"
+            autocomplete="username"
+            required
+          />
+        </div>
+        <div class="field-block">
+          <label for="login-password">Mot de passe</label>
+          <input
+            type="password"
+            id="login-password"
+            placeholder="••••••••"
+            autocomplete="current-password"
+            required
+          />
+        </div>
+        <button type="submit" id="login-submit-btn" class="btn btn-primary btn-block">
+          Se connecter
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- ==================== MODAL 2 : CRÉER UNE ROOM (BOUTON +) ==================== -->
+  <div id="create-modal" class="modal-overlay hidden" role="dialog" aria-modal="true">
+    <div class="modal-card">
+      <button type="button" id="close-create-modal" class="modal-close" aria-label="Fermer">&times;</button>
+      <h3>Créer une room</h3>
+      <p class="modal-desc">Nommez votre room (ou laissez vide pour utiliser la date et l'heure actuelle).</p>
+
+      <form id="create-room-form" class="form-stack">
+        <div class="field-block">
+          <label for="room-name-input">Nom de la room (optionnel)</label>
+          <input
+            type="text"
+            id="room-name-input"
+            placeholder="Ex: 21-11-26_00-45"
+            maxlength="60"
+            autocomplete="off"
+          />
+        </div>
+
+        <div class="field-block">
+          <label for="duration-input">Durée du timer</label>
+          <div class="preset-row">
+            <button type="button" class="preset-chip" data-min="2">2 min</button>
+            <button type="button" class="preset-chip active" data-min="5">5 min</button>
+            <button type="button" class="preset-chip" data-min="10">10 min</button>
+            <button type="button" class="preset-chip" data-min="15">15 min</button>
+          </div>
+          <div class="input-suffix-row">
+            <input
+              type="number"
+              id="duration-input"
+              min="1"
+              max="120"
+              step="1"
+              value="5"
+              required
+            />
+            <span>minutes (par défaut 5 min)</span>
+          </div>
+        </div>
+        <button type="submit" id="create-room-btn" class="btn btn-primary btn-block">
+          Créer la room
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- ==================== MODAL 3 : HISTORIQUE DES ROOMS DU COMPTE ==================== -->
+  <div id="history-modal" class="modal-overlay hidden" role="dialog" aria-modal="true">
+    <div class="modal-card modal-history-card">
+      <button type="button" id="close-history-modal" class="modal-close" aria-label="Fermer">&times;</button>
+      <h3>Historique de vos rooms</h3>
+      <p class="modal-desc">Renommez vos sessions passées ou rouvrez un nuage terminé pour le revoir et le réexporter.</p>
+
+      <div id="history-list" class="history-list">
+        <p class="history-empty">Chargement...</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== MODAL 4 : QR CODE ==================== -->
+  <div id="qr-modal" class="modal-overlay hidden" role="dialog" aria-modal="true">
+    <div class="modal-card modal-qr-card">
+      <button type="button" id="close-qr-modal" class="modal-close" aria-label="Fermer">&times;</button>
+      <span class="field-tag">Rejoindre la session</span>
+      <div id="modal-code" class="modal-big-code">------</div>
+      <div id="modal-qr-container" class="modal-qr-box"></div>
+      <p id="modal-url" class="modal-url-text">wordcloud.sroff.dev/join/------</p>
+    </div>
+  </div>
+
+  <!-- ==================== MODAL 5 : BUG OU SUGGESTION D'AJOUT ==================== -->
+  <div id="feedback-modal" class="modal-overlay hidden" role="dialog" aria-modal="true">
+    <div class="modal-card">
+      <button type="button" id="close-feedback-modal" class="modal-close" aria-label="Fermer">&times;</button>
+      <h3>Un bug ou une suggestion d'ajout ?</h3>
+      <p class="modal-desc">Choisissez une catégorie et décrivez votre retour.</p>
+
+      <form id="feedback-form" class="form-stack">
+        <div class="field-block">
+          <label>Catégorie</label>
+          <div class="feedback-category-grid">
+            <button type="button" class="category-chip active" data-category="bug">
+              🐛 Bug
+            </button>
+            <button type="button" class="category-chip" data-category="suggestion">
+              💡 Suggestion d'ajout
+            </button>
+          </div>
+        </div>
+
+        <div class="field-block">
+          <label for="feedback-author-input">Votre pseudo / nom (optionnel)</label>
+          <input
+            type="text"
+            id="feedback-author-input"
+            placeholder="Anonyme"
+            maxlength="40"
+            autocomplete="off"
+          />
+        </div>
+
+        <div class="field-block">
+          <label for="feedback-message-input">Message</label>
+          <textarea
+            id="feedback-message-input"
+            rows="4"
+            placeholder="Décrivez le bug rencontré ou votre idée d'ajout..."
+            maxlength="1200"
+            required
+          ></textarea>
+        </div>
+
+        <button type="submit" id="feedback-submit-btn" class="btn btn-primary btn-block">
+          Envoyer sur Discord
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- ==================== MODAL 6 : POPUP RENOMMER UNE ROOM ==================== -->
+  <div id="rename-room-modal" class="modal-overlay hidden" role="dialog" aria-modal="true">
+    <div class="modal-card">
+      <button type="button" id="close-rename-modal" class="modal-close" aria-label="Fermer">&times;</button>
+      <h3>Renommer la room</h3>
+      <p class="modal-desc">Modifiez le nom du nuage de mots <strong id="rename-room-code-label">------</strong>.</p>
+
+      <form id="rename-room-form" class="form-stack">
+        <div class="field-block">
+          <label for="rename-room-input">Nouveau nom</label>
+          <input
+            type="text"
+            id="rename-room-input"
+            maxlength="60"
+            autocomplete="off"
+            required
+          />
+        </div>
+        <div class="modal-actions-row">
+          <button type="button" id="cancel-rename-btn" class="btn btn-outline btn-block">Annuler</button>
+          <button type="submit" id="confirm-rename-btn" class="btn btn-primary btn-block">Enregistrer</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ==================== MODAL 7 : POPUP CONFIRMER SUPPRESSION ==================== -->
+  <div id="delete-room-modal" class="modal-overlay hidden" role="dialog" aria-modal="true">
+    <div class="modal-card">
+      <button type="button" id="close-delete-modal" class="modal-close" aria-label="Fermer">&times;</button>
+      <h3>Supprimer ce nuage de mots ?</h3>
+      <p class="modal-desc">
+        Voulez-vous vraiment supprimer <strong id="delete-room-name-label">---</strong> ? Cette action est irréversible.
+      </p>
+
+      <div class="modal-actions-row">
+        <button type="button" id="cancel-delete-btn" class="btn btn-outline btn-block">Annuler</button>
+        <button type="button" id="confirm-delete-btn" class="btn btn-danger btn-block">Supprimer</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== MODAL 8 : PARAMÈTRES DU COMPTE (MOT DE PASSE & WEBHOOK DISCORD) ==================== -->
+  <div id="change-password-modal" class="modal-overlay hidden" role="dialog" aria-modal="true">
+    <div class="modal-card">
+      <button type="button" id="close-password-modal" class="modal-close" aria-label="Fermer">&times;</button>
+      <h3>Paramètres du compte</h3>
+      <p class="modal-desc">Connecté en tant que <strong id="password-modal-username">---</strong></p>
+
+      <!-- Onglets : Option 1 (Mot de passe) / Option 2 (Webhook Discord) -->
+      <div class="feedback-category-grid account-tabs-grid">
+        <button type="button" id="tab-account-pwd" class="category-chip active">
+          🔒 Mot de passe
+        </button>
+        <button type="button" id="tab-account-webhook" class="category-chip">
+          🔗 Webhook Discord
+        </button>
+      </div>
+
+      <!-- Option 1 : Changer son mot de passe -->
+      <form id="change-password-form" class="form-stack">
+        <div class="field-block">
+          <label for="new-password-input">Nouveau mot de passe</label>
+          <input
+            type="password"
+            id="new-password-input"
+            placeholder="••••••••"
+            autocomplete="new-password"
+            required
+          />
+        </div>
+        <div class="field-block">
+          <label for="confirm-password-input">Confirmer le nouveau mot de passe</label>
+          <input
+            type="password"
+            id="confirm-password-input"
+            placeholder="••••••••"
+            autocomplete="new-password"
+            required
+          />
+        </div>
+        <div class="modal-actions-row">
+          <button type="button" id="cancel-password-btn" class="btn btn-outline btn-block">Fermer</button>
+          <button type="submit" id="save-password-btn" class="btn btn-primary btn-block">Enregistrer</button>
+        </div>
+      </form>
+
+      <!-- Option 2 : Changer le Webhook Discord des invitations de rooms -->
+      <form id="change-webhook-form" class="form-stack hidden">
+        <div class="field-block">
+          <label for="custom-webhook-input">URL du Webhook Discord (invitations des rooms)</label>
+          <input
+            type="text"
+            id="custom-webhook-input"
+            placeholder="https://discord.com/api/webhooks/..."
+            autocomplete="off"
+          />
+          <span class="field-hint">Laissez vide pour utiliser le webhook Discord par défaut.</span>
+        </div>
+        <div class="modal-actions-row">
+          <button type="button" id="reset-webhook-btn" class="btn btn-outline btn-block">Par défaut</button>
+          <button type="submit" id="save-webhook-btn" class="btn btn-primary btn-block">Enregistrer</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Notifications -->
+  <div id="toast-container" class="toast-container"></div>
+
+  <!-- Canvas Easter Egg Konami Code (Confettis + Logo Tremplin Numérique) -->
+  <canvas id="konami-canvas" class="konami-canvas hidden"></canvas>
+
+  <script src="/js/qrcode.js"></script>
+  <script type="module" src="/js/app.js"></script>
+</body>
+</html>

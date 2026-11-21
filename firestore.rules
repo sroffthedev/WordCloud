@@ -1,0 +1,19 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Collection des paramètres des comptes administrateurs (mot de passe & webhook Discord personnalisé)
+    match /accounts/{accountId} {
+      allow read, write: if true;
+    }
+
+    // Collection des rooms et sous-collections (words, images, participants)
+    match /rooms/{roomId} {
+      allow read, write: if true;
+
+      match /{subcollection}/{docId} {
+        allow read, write: if true;
+      }
+    }
+  }
+}
